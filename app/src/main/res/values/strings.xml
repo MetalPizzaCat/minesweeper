@@ -1,0 +1,11 @@
+<resources>
+    <string name="app_name">minesweeper</string>
+    <string name="gamemode_easy_name">Easy</string>
+    <string name="restart">Restart</string>
+    <string name="you_won">You won!</string>
+    <string name="you_lost">You lost!</string>
+    <string name="gamemode_medium_name">Medium</string>
+    <string name="gamemode_hard_name">Hard</string>
+    <string name="gamemode_absurd_name">Absurd</string>
+    <string name="gamemode_test_name">Not even a challenge</string>
+</resources>
