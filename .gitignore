@@ -1,10 +1,13 @@
 *.iml
 .gradle
 .idea/
+.vscode/
+app/release
+app/debug
 /local.properties
 /.idea/caches
 /.idea/libraries
-/.idea/modules.xml
+/.idea/modules.xmle
 /.idea/workspace.xml
 /.idea/navEditor.xml
 /.idea/assetWizardSettings.xml
