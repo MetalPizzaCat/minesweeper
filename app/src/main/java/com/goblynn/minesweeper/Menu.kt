@@ -1,7 +1,10 @@
 package com.goblynn.minesweeper
 
 import android.content.Context
+import android.content.Context.VIBRATOR_SERVICE
+import android.os.Build
 import android.os.VibrationEffect
+import android.os.Vibrator
 import android.os.VibratorManager
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
@@ -9,27 +12,22 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Done
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateMapOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -42,7 +40,13 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 @Composable
 fun MainMenu(modifier: Modifier = Modifier, view: GameView = viewModel()) {
     val vibrator =
-        (LocalContext.current.getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as VibratorManager).defaultVibrator
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            (LocalContext.current.getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as VibratorManager).defaultVibrator
+        } else {
+            @Suppress("DEPRECATION")
+            LocalContext.current.getSystemService(VIBRATOR_SERVICE) as Vibrator
+        }
+
 
     AnimatedContent(view.isPlaying) { playing ->
         if (!playing) {
@@ -92,7 +96,7 @@ fun MainMenu(modifier: Modifier = Modifier, view: GameView = viewModel()) {
 
                                 },
 
-                        )
+                            )
                         AnimatedVisibility(view.won) {
                             Text(stringResource(R.string.you_won))
                         }
@@ -127,6 +131,52 @@ fun MainMenu(modifier: Modifier = Modifier, view: GameView = viewModel()) {
             }
 
         }
+    }
+    AnimatedVisibility(view.alertAboutLastMineFailure) {
+        AlertDialog(
+            icon = {
+                Icon(Icons.Default.Close, contentDescription = "Alert icon")
+            },
+            title = {
+                Text("Ooops!")
+            },
+            text = {
+                Text("You almost won but you clicked on a mine, are you sure you want to continue? There won't be a second chance!")
+            },
+            onDismissRequest = {
+                view.looseGame()
+                vibrator.vibrate(
+                    VibrationEffect.createOneShot(
+                        500,
+                        VibrationEffect.DEFAULT_AMPLITUDE
+                    )
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                       view.acceptLoss()
+                        vibrator.vibrate(
+                            VibrationEffect.createOneShot(
+                                500,
+                                VibrationEffect.DEFAULT_AMPLITUDE
+                            )
+                        )
+                    }
+                ) {
+                    Text("Confirm")
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = {
+                       view.rejectLoss()
+                    }
+                ) {
+                    Text("Dismiss")
+                }
+            }
+        )
     }
 }
 

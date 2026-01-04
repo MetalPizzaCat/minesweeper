@@ -12,6 +12,12 @@ import kotlin.random.Random
 class GameView : ViewModel() {
     val cells = mutableStateMapOf<Vec2, Cell>()
 
+    var alertAboutLastMineFailure by mutableStateOf(false)
+        private set
+
+    var hasAlertedAboutLastMineFailure by mutableStateOf(false)
+        private set
+
     var shouldVibrate by mutableStateOf(true)
 
     var remainingBombCount by mutableIntStateOf(0)
@@ -57,6 +63,7 @@ class GameView : ViewModel() {
         this.height = height
         won = false
         lost = false
+        hasAlertedAboutLastMineFailure = false
         this.bombCount = bombCount.coerceAtMost(width * height)
         remainingBombCount = this.bombCount
         cells.clear()
@@ -96,14 +103,11 @@ class GameView : ViewModel() {
             bombs.add(Vec2(x, y))
         }
         bombs.forEach { currPos ->
-            if (cells[currPos] == null || !cells[currPos]!!.isBomb) {
-                return
-            }
             positionsToCheck.forEach { pos ->
                 if (cells.contains(currPos + pos)) {
                     cells[currPos + pos] = cells[currPos + pos]!!.copy(
                         isBorder = true,
-                        bombCount = cells[currPos]!!.bombCount + 1
+                        bombCount = cells[currPos + pos]!!.bombCount + 1
                     )
                 }
             }
@@ -153,11 +157,27 @@ class GameView : ViewModel() {
      */
     fun clickCell(position: Vec2): Boolean {
         if (cells[position]!!.isBomb && !cells[position]!!.isFlagged) {
-            looseGame()
-            return true
+            if (!hasAlertedAboutLastMineFailure && cells.count { cell -> (cell.value.isBomb && cell.value.isFlagged) || (!cell.value.isBomb && !cell.value.isFlagged) } <= (bombCount * 0.1).toInt()
+                    .coerceAtLeast(1)) {
+                alertAboutLastMineFailure = true
+                return false
+            } else {
+                looseGame()
+                return true
+            }
         }
         reveal(position)
         return false
+    }
+
+    fun acceptLoss() {
+        looseGame()
+        alertAboutLastMineFailure = false
+    }
+
+    fun rejectLoss() {
+        alertAboutLastMineFailure = false
+        hasAlertedAboutLastMineFailure = true
     }
 
     /**

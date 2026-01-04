@@ -1,7 +1,11 @@
 package com.goblynn.minesweeper
 
+import android.annotation.SuppressLint
 import android.content.Context
+import android.content.Context.VIBRATOR_SERVICE
+import android.os.Build
 import android.os.VibrationEffect
+import android.os.Vibrator
 import android.os.VibratorManager
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
@@ -16,6 +20,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateMapOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
@@ -25,6 +30,8 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 
+// suppressing because current calculation uses dp
+@SuppressLint("ConfigurationScreenWidthHeight")
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)
 fun Playfield(
@@ -36,10 +43,16 @@ fun Playfield(
     onCellMarked: (position: Vec2) -> Unit,
     modifier: Modifier = Modifier
 ) {
+
     val cellWidth = LocalConfiguration.current.screenWidthDp / width
 
     val vibrator =
-        (LocalContext.current.getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as VibratorManager).defaultVibrator
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            (LocalContext.current.getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as VibratorManager).defaultVibrator
+        } else {
+            @Suppress("DEPRECATION")
+            LocalContext.current.getSystemService(VIBRATOR_SERVICE) as Vibrator
+        }
 
     Column(
         modifier
@@ -122,7 +135,7 @@ fun Cell(
 fun FieldPreview() {
     val width = 5
     val height = 10
-    val cells = mutableStateMapOf<Vec2, Cell>()
+    val cells = remember { mutableStateMapOf<Vec2, Cell>() }
     for (y in 0..<height) {
         for (x in 0..<width) {
             cells[Vec2(x, y)] = Cell(
